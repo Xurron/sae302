@@ -49,3 +49,19 @@ class Connexion:
                     print(f"Sent: {message}")
                 except Exception as e:
                     print(f"Error sending message: {message}, error: {e}")
+
+    def send_file(self, file_path):
+        if self.running:
+            try:
+                file_name = file_path.split('/')[-1]
+                with open(file_path, 'rb') as file:
+                    file_content = file.read()
+                    message = {
+                        "type": "file",
+                        "file_name": file_name,
+                        "file_content": file_content.decode('utf-8')
+                    }
+                    self.client_socket.send(json.dumps(message).encode('utf-8'))
+                    print(f"Fichier envoyé : {file_path}")
+            except Exception as e:
+                print(f"Error sending file: {file_path}, error: {e}")

@@ -18,7 +18,7 @@ def main():
     #    client.send_data(test)
     #    sleep(2)
 
-    client.send_file()
+    client.send_file("project/Main.java")
 
 if __name__ == '__main__':
     main()

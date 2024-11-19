@@ -2,12 +2,6 @@ import json
 import socket
 import threading
 
-#from main_server.src.ConnexionSlave import ConnexionSlave
-from .ConnexionSlave import ConnexionSlave
-
-# classe permettant aux clients de se connecter au serveur principal
-# va permettre l'échange des informations reçu par les serveurs esclaves et de les envoyer aux clients
-
 class Connexion:
     def __init__(self, host: str, port: int):
         self.host = host
@@ -29,15 +23,12 @@ class Connexion:
             client_type = self.get_client_type(client_socket)
             self.clients.append({'socket': client_socket, 'type': client_type})
             threading.Thread(target=self.handle_client, args=(client_socket,)).start()
-            self.thread_received_file = threading.Thread(target=self.receive_file)
-            self.thread_received_file.start()
 
     def get_client_type(self, client_socket):
         client_socket.send("Please send your client type".encode('utf-8'))
         client_type = client_socket.recv(1024).decode('utf-8')
         return client_type
 
-    # fonction permettant de gérer les messages reçus par les clients
     def handle_client(self, client_socket):
         while self.running:
             try:
@@ -52,10 +43,18 @@ class Connexion:
                 pass
 
     def traitement_message(self, message, client_socket):
-        if message["author_type"] == "client":
-            print(f"Message reçu d'un client, {message}")
-        if message["author_type"] == "slave":
-            print(f"Message reçu d'un esclave, {message}")
+        if message["type"] == "file":
+            file_name = message["file_name"]
+            file_content = message["file_content"].encode('latin-1')
+            file_path = "tmp/" + file_name
+            with open(file_path, 'wb') as file:
+                file.write(file_content)
+            print(f"File received and saved as {file_path}")
+        else:
+            if message["author_type"] == "client":
+                print(f"Message reçu d'un client, {message}")
+            if message["author_type"] == "slave":
+                print(f"Message reçu d'un esclave, {message}")
 
     def broadcast(self, message, client_socket):
         for client in self.clients:
