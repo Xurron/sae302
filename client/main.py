@@ -1,24 +1,20 @@
+import signal
+import sys
 import threading
 from time import sleep
 
 from src.Connexion import Connexion
 
-def main():
-    client = Connexion("127.0.0.1", 12350, "client")
-    client.connect()
-
-    test = {
-        "author_type": "client",
-        "type": "message",
-        "content": "Hello World!"
-    }
-
-    #client.send_data(test)
-    #while True:
-    #    client.send_data(test)
-    #    sleep(2)
-
-    client.send_file("project/Main.java")
+def procedure_deconnexion(sig, frame):
+    client.disconnect()
+    sys.exit(0)
 
 if __name__ == '__main__':
-    main()
+    client = Connexion("127.0.0.1", 12353, "client")
+    client.connect()
+
+    # envoi de fichier (dans le futur envoi de requête)
+    client.send_file("project/main.py")
+
+    # Enregistrez le signal d'interruption clavier (CTRL+C)
+    signal.signal(signal.SIGINT, procedure_deconnexion)

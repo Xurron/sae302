@@ -1,21 +1,23 @@
 import threading
+from time import sleep
+import os
 
 from src.Connexion import Connexion
-from src.ConnexionClient import ConnexionClient
-from src.ConnexionSlave import ConnexionSlave
 
 def main():
     print(f"Initialisation du serveur pour les clients")
-    client_server = Connexion("127.0.0.1", 12350)
-    client_thread = threading.Thread(target=client_server.start)
+    server = Connexion("127.0.0.1", 12353)
+    server_thread = threading.Thread(target=server.start)
 
-    #print(f"Initialisation du serveur pour les serveurs esclaves")
-    #slave_server = ConnexionSlave("127.0.0.1", 23457)
-    #server_thread = threading.Thread(target=slave_server.start)
+    print(f"Démarrage du serveur maître")
+    server_thread.start()
 
-    print(f"Démarrage des serveurs")
-    client_thread.start()
-    #server_thread.start()
+    #while True:
+    #    # si il y a un fichier main.py dans le dossier tmp, on l'envoi vers un serveur esclave
+    #    if os.path.exists("tmp/main.py"):
+    #        server.send_file("tmp/main.py")
+    #        print(f"Envoi du fichier main.py à un esclave")
+    #    sleep(10)
 
 if __name__ == '__main__':
     main()
