@@ -6,7 +6,7 @@ from src.Connexion import Connexion
 
 def main():
     print(f"Initialisation du serveur pour les clients")
-    server = Connexion("127.0.0.1", 12353)
+    server = Connexion("127.0.0.1", 10002)
     server_thread = threading.Thread(target=server.start)
 
     print(f"Démarrage du serveur maître")

@@ -10,7 +10,7 @@ def procedure_deconnexion(sig, frame):
     sys.exit(0)
 
 if __name__ == '__main__':
-    client = Connexion("127.0.0.1", 12353, "client")
+    client = Connexion("127.0.0.1", 10002, "client")
     client.connect()
 
     # envoi de fichier (dans le futur envoi de requête)

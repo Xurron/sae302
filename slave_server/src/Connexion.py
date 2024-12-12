@@ -49,29 +49,29 @@ class Connexion:
                 message = self.client_socket.recv(1024).decode('utf-8')
                 if message:
                     msg = json.loads(message)
-                    self.traitement_message(msg, self.client_socket)
+                    self.traitement_message(msg)
                 else:
-                    #self.remove_client(self.client_socket)
                     break
             except:
                 pass
 
-    def traitement_message(self, message, client_socket):
-        # vérifier que le message est pour le bon UID (vérifier également si ce qui est envoyé est bon)
-        """
-        if message["author_type"] == "master" and message["destination_type"] == "slave" and message["type"] == "file":
-            uid = message["uid"]
+    def traitement_message(self, message):
+        # va déterminer si c'est un fichier ou non envoyé par le client pour le master
+        if message["author_type"] == "master" and message["destination_type"] == "master" and message["type"] == "file":
+            uid_file = message["uid_file"]
             file_name = message["file_name"]
             file_content = message["file_content"].encode('latin-1')
-            file_path = f"tmp/{uid}/"
+            file_path = f"tmp/{uid_file}/"
             # créer le dossier tmp/uid
             os.makedirs(file_path, exist_ok=True)
-            file_path = f"tmp/{uid}/" + file_name
+            file_path = f"tmp/{uid_file}/" + file_name
             with open(file_path, 'wb') as file:
                 file.write(file_content)
             print(f"Un fichier a bien été reçu : {file_path}")
-            self.dispatch(file_path, uid)
-        """
+            self.send_file_to_slave(file_path)
+        else:
+            if message["author_type"] == "slave":
+                print(f"Message reçu du serveur maître : {message}")
 
     def send_data(self, message):
         if self.running:

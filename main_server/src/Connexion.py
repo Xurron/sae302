@@ -95,7 +95,8 @@ class Connexion:
             with open(file_path, 'wb') as file:
                 file.write(file_content)
             print(f"Un fichier a bien été reçu : {file_path}")
-            self.dispatch(file_path, uid)
+            #self.dispatch(file_path, uid)
+            self.send_file_to_slave(file_path)
         else:
             if message["author_type"] == "client":
                 print(f"Message reçu d'un client, {message}")
@@ -118,12 +119,59 @@ class Connexion:
 
     def send_data(self, message):
         if self.running:
+            # vérifier que le message est bien un dictionnaire
             if isinstance(message, dict):
                 try:
                     self.server_socket.send(json.dumps(message).encode('utf-8'))
                     print(f"Sent: {message}")
                 except Exception as e:
-                    print(f"Error sending message: {message}")
+                    print(f"Error sending message: {message}, error: {e}")
+
+    def send_file_to_slave(self, file_path: str):
+        # fonction permettant d'envoyer des données à un esclave
+        global uid_slave
+
+        if self.running:
+            try:
+                # pour chaque slave connecté, on récupère celui qui a la valeur files la plus basse parmis ceux qui ont le type de fichier à exécuter (JAVA, python, c, c++) à True
+                # puis on envoie le message à ce slave
+                min_slave = None
+                ext = file_path.split(".")[-1]
+                if ext == "py":
+                    ext = "python"
+                elif ext == "java":
+                    ext = "java"
+                elif ext == "c":
+                    ext = "c"
+                elif ext == "cpp":
+                    ext = "c++"
+
+                for slave in self.clients:
+                    if slave["author_type"] == "slave":
+                        if min_slave is None or ((slave["files"] < min_slave["files"]) and (slave[ext])):
+                            min_slave = slave
+
+                uid_slave = min_slave["uid"]
+
+                file_name = file_path.split('/')[-1]
+                uid_file = file_path.split('/')[-2]
+
+                with open(file_path, 'rb') as file:
+                    file_content = file.read()
+                    message = {
+                        "author_type": "master",
+                        "destination_type": "slave",
+                        "uid_destination": uid_slave,
+                        "uid_file": uid_file,
+                        "type": "file",
+                        "file_name": file_name,
+                        "file_content": file_content.decode('utf-8')
+                    }
+
+                print(f"Sent to slave {uid_slave}: {message}")
+                self.send_data(message)
+            except Exception as e:
+                print(f"Error sending message to slave {uid_slave}: {message}, error: {e}")
 
     def send_file(self, uid_slave, uid_file, file_path):
         # fonction permettant d'envoyer des fichiers (qui iront vers les slaves)
@@ -135,68 +183,16 @@ class Connexion:
                     message = {
                         "author_type": "master",
                         "destination_type": "slave",
-                        "uid": uid,
+                        "uid_destination": uid_slave,
+                        "uid_file": uid_file,
                         "type": "file",
                         "file_name": file_name,
                         "file_content": file_content.decode('utf-8')
                     }
                     self.send_data(message)
-                    print(f"Fichier envoyé : {file_path}")
+                    print(f"Fichier envoyé à {uid_slave} : {file_path}")
             except Exception as e:
                 print(f"Erreur lors de l'envoi du fichier : {file_path}, erreur: {e}")
-
-    # faire une fonction pour la répartition de charge
-    def dispatch(self, file_path, uid):
-        # récupérer le type de fichier reçu avec l'extension (ex: .py)
-        # récupérer la liste des slaves connectés
-        # faire une liste des slaves permettant d'exécuter le fichier
-        # récupérer le nombre de fichiers déjà envoyés à chaque slave
-        # envoyer le fichier au slave avec le moins de fichiers
-
-        # récupérer l'extension du fichier
-        ext = file_path.split(".")[-1]
-
-        # récupérer la liste des slaves connectés
-        slaves = []
-        for client in self.clients:
-            if client["author_type"] == "slave":
-                slaves.append(client)
-
-        # faire une liste des slaves permettant d'exécuter le fichier
-        slaves_exec = []
-
-        for slave in slaves:
-            if ext == "py" and slave["python"]:
-                slaves_exec.append(slave)
-            elif ext == "java" and slave["java"]:
-                slaves_exec.append(slave)
-            elif ext == "c" and slave["c"]:
-                slaves_exec.append(slave)
-            elif ext == "cpp" and slave["c++"]:
-                slaves_exec.append(slave)
-
-        # récupérer le nombre de fichiers déjà envoyés à chaque slave
-        #files_sent = []
-        #for slave in slaves_exec:
-        #    files_sent.append(len(slave["files"]))
-
-        # si aucun slave ne peut exécuter le fichier, envoyer un message d'erreur
-        if not slaves_exec:
-            print("Aucun esclave ne peut exécuter le fichier")
-            return
-
-        # envoyer le fichier au slave avec le moins de fichiers (réécrire cette section entièrement)
-        # récupérer le slave qui a envoyé le moins de message (tout en gardant toutes les informations concernant le slave)
-        # envoyer un fichier à ce slave en récupérant le fichier à envoyer (le fichier est envoyé dans le dossier tmp/uid)
-        # incrémenter le nombre de fichiers envoyés à ce slave
-
-        # récupérer le slave qui a envoyé le moins de message (tout en gardant toutes les informations concernant le slave)
-        min_slave = None
-        for slave in slaves_exec:
-            if min_slave is None:
-                min_slave = slave
-            if slave["files"] < min_slave["files"]:
-                min_slave = slave
 
     def __clear_tmp_directory(self):
         # fonction permettant de vider le dossier temporaire
