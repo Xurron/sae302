@@ -103,13 +103,14 @@ class Connexion:
             if message["author_type"] == "slave":
                 print(f"Message reçu d'un esclave, {message}")
 
-    #def broadcast(self, message, client_socket):
-    #    for client in self.clients:
-    #        if client != client_socket:
-    #            try:
-    #                client.send(message.encode('utf-8'))
-    #            except:
-    #                pass
+    def broadcast(self, message):
+        for client in self.clients:
+            #print(client["socket"])
+            c = client["socket"]
+            try:
+                c.send(message.encode('utf-8'))
+            except:
+                pass
 
     def remove_client(self, client_socket):
         if client_socket in self.clients:
@@ -122,7 +123,7 @@ class Connexion:
             # vérifier que le message est bien un dictionnaire
             if isinstance(message, dict):
                 try:
-                    self.server_socket.send(json.dumps(message).encode('utf-8'))
+                    self.broadcast(json.dumps(message))
                     print(f"Sent: {message}")
                 except Exception as e:
                     print(f"Error sending message: {message}, error: {e}")

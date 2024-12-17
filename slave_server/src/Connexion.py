@@ -1,8 +1,10 @@
 import socket
+import sys
 import threading
 import uuid
 import json
 import os
+import subprocess
 
 class Connexion:
     def __init__(self, host: str, port: int, type: str):
@@ -11,13 +13,13 @@ class Connexion:
         self.type = type
         self.uid = str(uuid.uuid4())
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.running = False
+        self.running = True
         self.receive_thread = None
 
     def connect(self):
         try:
             self.client_socket.connect((self.host, self.port))
-            print(f"Connecté au serveur {self.host}:{self.port} en tant que \"{self.type}\"")
+            print(f"Connecté au serveur {self.host}:{self.port} en tant que \"{self.type}\" et ayant comme UID : {self.uid}")
             # récupérer les valeurs à mettre dans les langages de possibles
             data_connexion = {
                 "author_type": "slave",
@@ -57,7 +59,7 @@ class Connexion:
 
     def traitement_message(self, message):
         # va déterminer si c'est un fichier ou non envoyé par le client pour le master
-        if message["author_type"] == "master" and message["destination_type"] == "master" and message["type"] == "file":
+        if message["author_type"] == "master" and message["destination_type"] == "slave" and message["type"] == "file" and message["uid_destination"] == self.uid:
             uid_file = message["uid_file"]
             file_name = message["file_name"]
             file_content = message["file_content"].encode('latin-1')
@@ -68,7 +70,10 @@ class Connexion:
             with open(file_path, 'wb') as file:
                 file.write(file_content)
             print(f"Un fichier a bien été reçu : {file_path}")
-            self.send_file_to_slave(file_path)
+            ext = file_name.split(".")[-1]
+            # faire un execute_file dans un thread
+            threading.Thread(target=self.execute_file, args=(file_path, ext)).start()
+            #self.execute_file(file_path, ext)
         else:
             if message["author_type"] == "slave":
                 print(f"Message reçu du serveur maître : {message}")
@@ -82,3 +87,58 @@ class Connexion:
                     print(f"Sent: {message}")
                 except:
                     print(f"Error sending message: {message}")
+
+    def execute_file(self, file_path: str, ext:str):
+        if self.running:
+            try:
+                # exécuter le programme en fonction de l'extension
+                if ext == "py":
+                    os.system(f"python3 {file_path}")
+                elif ext == "java":
+                    if self.verif_java():
+                        os.system(f"java {file_path}")
+                elif ext == "c":
+                    if self.verif_c():
+                        self.remove_compile_if_exist(f"./{file_path.split('.')[0]}")
+                        os.system(f"gcc {file_path} -o {file_path.split('.')[0]}")
+                        os.system(f"./{file_path.split('.')[0]}")
+                elif ext == "cpp":
+                    if self.verif_cpp():
+                        self.remove_compile_if_exist(f"./{file_path.split('.')[0]}")
+                        os.system(f"g++ {file_path} -o {file_path.split('.')[0]}")
+                        os.system(f"./{file_path.split('.')[0]}")
+                else:
+                    print(f"Error: {ext} extension not supported")
+
+                sys.exit(0)
+            except Exception as e:
+                print(f"Error sending file: {file_path}, error: {e}")
+
+    def remove_compile_if_exist(self, file):
+        if os.path.exists(file):
+            os.remove(file)
+
+    # créer une fonction permettant de vérifier si java est installé ou non
+    def verif_java(self):
+        try:
+            subprocess.run(["java", "-version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except FileNotFoundError:
+            print("Erreur : Java n'est pas installé. Pour l'installer sous Linux : apt install default-jdk")
+            return False
+
+    def verif_c(self):
+        try:
+            subprocess.run(["gcc", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except FileNotFoundError:
+            print("Erreur : gcc n'est pas installé. Pour l'installer sous Linux : apt install gcc")
+            return False
+
+    def verif_cpp(self):
+        try:
+            subprocess.run(["g++", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except FileNotFoundError:
+            print("Erreur : g++ n'est pas installé. Pour l'installer sous Linux : apt install g++")
+            return False
