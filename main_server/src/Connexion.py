@@ -37,6 +37,7 @@ class Connexion:
 
                 self.clients.append(content)
                 threading.Thread(target=self.handle_client, args=(client_socket,)).start()
+                print(f"Connexion établie avec le client {client_address}")
 
             if client_type["type"] == "connexion" and client_type["author_type"] == "slave":
                 content_author_type = client_type["author_type"]
@@ -61,8 +62,7 @@ class Connexion:
 
                 self.clients.append(content)
                 threading.Thread(target=self.handle_client, args=(client_socket,)).start()
-
-            print(f"Connexion établie avec {client_address}")
+                print(f"Connexion établie avec le slave {client_address}")
 
     def get_client_type(self, client_socket):
         client_type = client_socket.recv(1024).decode('utf-8')
@@ -97,6 +97,18 @@ class Connexion:
             print(f"Un fichier a bien été reçu : {file_path}")
             #self.dispatch(file_path, uid)
             self.send_file_to_slave(file_path)
+        elif message["author_type"] == "slave" and message["destination_type"] == "master" and message["type"] == "output_file":
+            #print(f"Message reçu d'un esclave : {message}")
+            uid = message["uid"]
+            output = message["output"]
+            message = {
+                "author_type": "master",
+                "destination_type": "client",
+                "type": "output_file",
+                "uid": uid,
+                "output": output
+            }
+            self.send_data(message)
         else:
             if message["author_type"] == "client":
                 print(f"Message reçu d'un client, {message}")
@@ -169,31 +181,30 @@ class Connexion:
                         "file_content": file_content.decode('utf-8')
                     }
 
-                print(f"Sent to slave {uid_slave}: {message}")
                 self.send_data(message)
             except Exception as e:
                 print(f"Error sending message to slave {uid_slave}: {message}, error: {e}")
 
-    def send_file(self, uid_slave, uid_file, file_path):
-        # fonction permettant d'envoyer des fichiers (qui iront vers les slaves)
-        if self.running:
-            try:
-                file_name = file_path.split('/')[-1]
-                with open(file_path, 'rb') as file:
-                    file_content = file.read()
-                    message = {
-                        "author_type": "master",
-                        "destination_type": "slave",
-                        "uid_destination": uid_slave,
-                        "uid_file": uid_file,
-                        "type": "file",
-                        "file_name": file_name,
-                        "file_content": file_content.decode('utf-8')
-                    }
-                    self.send_data(message)
-                    print(f"Fichier envoyé à {uid_slave} : {file_path}")
-            except Exception as e:
-                print(f"Erreur lors de l'envoi du fichier : {file_path}, erreur: {e}")
+    #def send_file(self, uid_slave, uid_file, file_path):
+    #    # fonction permettant d'envoyer des fichiers (qui iront vers les slaves)
+    #    if self.running:
+    #        try:
+    #            file_name = file_path.split('/')[-1]
+    #            with open(file_path, 'rb') as file:
+    #                file_content = file.read()
+    #                message = {
+    #                    "author_type": "master",
+    #                    "destination_type": "slave",
+    #                    "uid_destination": uid_slave,
+    #                    "uid_file": uid_file,
+    #                    "type": "file",
+    #                    "file_name": file_name,
+    #                    "file_content": file_content.decode('utf-8')
+    #                }
+    #                self.send_data(message)
+    #                print(f"Fichier envoyé à {uid_slave} : {file_path}")
+    #        except Exception as e:
+    #            print(f"Erreur lors de l'envoi du fichier : {file_path}, erreur: {e}")
 
     def __clear_tmp_directory(self):
         # fonction permettant de vider le dossier temporaire

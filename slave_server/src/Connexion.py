@@ -1,3 +1,4 @@
+import shutil
 import socket
 import sys
 import threading
@@ -33,6 +34,7 @@ class Connexion:
             }
             self.client_socket.send(json.dumps(data_connexion).encode('utf-8'))
             self.running = True
+            self.__clear_tmp_directory() # supprimer les fichiers temporaires
             self.receive_thread = threading.Thread(target=self.receive_messages).start()
         except Exception as e:
             print(f"Connection error: {e}")
@@ -83,36 +85,49 @@ class Connexion:
             # vérifier que le message est bien un dictionnaire
             if isinstance(message, dict):
                 try:
-                    self.client_socket.send(str(message).encode('utf-8'))
+                    self.client_socket.send(json.dumps(message).encode('utf-8'))
                     print(f"Sent: {message}")
                 except:
-                    print(f"Error sending message: {message}")
+                    print(f"Une erreur est survenue lors de l'envoi du message : {message}, erreur : {e}")
 
     def execute_file(self, file_path: str, ext:str):
         if self.running:
             try:
                 # exécuter le programme en fonction de l'extension
                 if ext == "py":
-                    os.system(f"python3 {file_path}")
+                    result = subprocess.run(["python3", file_path], capture_output=True, text=True)
                 elif ext == "java":
                     if self.verif_java():
-                        os.system(f"java {file_path}")
+                        result = subprocess.run(["java", file_path], capture_output=True, text=True)
                 elif ext == "c":
                     if self.verif_c():
                         self.remove_compile_if_exist(f"./{file_path.split('.')[0]}")
                         os.system(f"gcc {file_path} -o {file_path.split('.')[0]}")
-                        os.system(f"./{file_path.split('.')[0]}")
+                        result = subprocess.run([f"./{file_path.split('.')[0]}"], capture_output=True, text=True)
                 elif ext == "cpp":
                     if self.verif_cpp():
                         self.remove_compile_if_exist(f"./{file_path.split('.')[0]}")
                         os.system(f"g++ {file_path} -o {file_path.split('.')[0]}")
-                        os.system(f"./{file_path.split('.')[0]}")
+                        result = subprocess.run([f"./{file_path.split('.')[0]}"], capture_output=True, text=True)
                 else:
                     print(f"Error: {ext} extension not supported")
 
+                if result:
+                    output = str(result.stdout)
+                    print(f"output : {output}")
+                    message = {
+                        "author_type": "slave",
+                        "destination_type": "master",
+                        "type": "output_file",
+                        "uid": self.uid,
+                        "output": output
+                    }
+                    self.send_data(message)
+                    print(f"Le fichier {file_path} a bien été exécuté et a retourné : {output}")
+
                 sys.exit(0)
             except Exception as e:
-                print(f"Error sending file: {file_path}, error: {e}")
+                print(f"Une erreur est survenue lors de l'exécution du fichier : {file_path}, erreur : {e}")
 
     def remove_compile_if_exist(self, file):
         if os.path.exists(file):
@@ -142,3 +157,11 @@ class Connexion:
         except FileNotFoundError:
             print("Erreur : g++ n'est pas installé. Pour l'installer sous Linux : apt install g++")
             return False
+
+    def __clear_tmp_directory(self):
+        # fonction permettant de vider le dossier temporaire
+        tmp_directory = "tmp/"
+        if os.path.exists(tmp_directory):
+            shutil.rmtree(tmp_directory)
+        os.makedirs(tmp_directory, exist_ok=True)
+        print("Dossier temporaire vidé")

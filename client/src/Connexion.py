@@ -42,11 +42,19 @@ class Connexion:
             try:
                 message = self.client_socket.recv(1024).decode('utf-8')
                 if message:
+                    self.traitement_message(message)
                     print(f"Received: {message}")
                 else:
                     break
             except:
                 break
+
+    def traitement_message(self, message):
+        print(f"Message reçu : {message}")
+        if message["author_type"] == "master" and message["destination_type"] == "client" and message["type"] == "output_file":
+            output = message["output"]
+            uid = message["uid"]
+            print(f"Pour le fichier ayant comme ID : {uid}, le contenu est : {output}")
 
     def send_data(self, message):
         if self.running:
@@ -54,7 +62,7 @@ class Connexion:
             if isinstance(message, dict):
                 try:
                     self.client_socket.send(json.dumps(message).encode('utf-8'))
-                    print(f"Sent: {message}")
+                    #print(f"Sent: {message}")
                 except Exception as e:
                     print(f"Error sending message: {message}, error: {e}")
 
@@ -74,7 +82,6 @@ class Connexion:
                         "file_content": file_content.decode('utf-8')
                     }
                     self.client_socket.send(json.dumps(message).encode('utf-8'))
-                    print(f"Fichier envoyé : {file_path}")
-                    print(message)
+                    print(f"Fichier envoyé : {file_path} avec comme UID : {uid}")
             except Exception as e:
                 print(f"Error sending file: {file_path}, error: {e}")
