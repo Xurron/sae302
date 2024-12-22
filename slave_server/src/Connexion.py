@@ -114,16 +114,17 @@ class Connexion:
 
                 if result:
                     output = str(result.stdout)
-                    print(f"output : {output}")
+                    uid_exec = file_path.split('/')[-2]
                     message = {
                         "author_type": "slave",
                         "destination_type": "master",
                         "type": "output_file",
-                        "uid": self.uid,
+                        "uid": uid_exec,
+                        "uid_slave": self.uid,
                         "output": output
                     }
                     self.send_data(message)
-                    print(f"Le fichier {file_path} a bien été exécuté et a retourné : {output}")
+                    print(f"Le fichier {uid_exec} a bien été exécuté et a retourné : {output}")
 
                 sys.exit(0)
             except Exception as e:

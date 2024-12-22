@@ -11,6 +11,7 @@ class Connexion:
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clients = []
         self.running = True
+        self.max_process = 3
 
     def start(self):
         self.server_socket.bind((self.host, self.port))
@@ -53,7 +54,7 @@ class Connexion:
                     "destination_type": content_destination_type,
                     "uid": content_uid,
                     "socket": client_socket,
-                    "files": 0,
+                    "process_running": 0,
                     "python": content_python,
                     "java": content_java,
                     "c": content_c,
@@ -100,6 +101,7 @@ class Connexion:
         elif message["author_type"] == "slave" and message["destination_type"] == "master" and message["type"] == "output_file":
             #print(f"Message reçu d'un esclave : {message}")
             uid = message["uid"]
+            uid_slave = message["uid_slave"]
             output = message["output"]
             message = {
                 "author_type": "master",
@@ -108,6 +110,11 @@ class Connexion:
                 "uid": uid,
                 "output": output
             }
+
+            for slave in self.clients:
+                if slave["uid"] == uid_slave:
+                    slave["process_running"] -= 1
+
             self.send_data(message)
         else:
             if message["author_type"] == "client":
@@ -146,7 +153,7 @@ class Connexion:
 
         if self.running:
             try:
-                # pour chaque slave connecté, on récupère celui qui a la valeur files la plus basse parmis ceux qui ont le type de fichier à exécuter (JAVA, python, c, c++) à True
+                # pour chaque slave connecté, on récupère celui qui a la valeur process_running la plus basse parmis ceux qui ont le type de fichier à exécuter (JAVA, python, c, c++) à True
                 # puis on envoie le message à ce slave
                 min_slave = None
                 ext = file_path.split(".")[-1]
@@ -161,7 +168,7 @@ class Connexion:
 
                 for slave in self.clients:
                     if slave["author_type"] == "slave":
-                        if min_slave is None or ((slave["files"] < min_slave["files"]) and (slave[ext])):
+                        if min_slave is None or ((slave["process_running"] < min_slave["process_running"]) and (slave[ext])):
                             min_slave = slave
 
                 uid_slave = min_slave["uid"]
@@ -182,6 +189,8 @@ class Connexion:
                     }
 
                 self.send_data(message)
+                min_slave["process_running"] += 1
+                print(min_slave)
             except Exception as e:
                 print(f"Error sending message to slave {uid_slave}: {message}, error: {e}")
 
@@ -192,3 +201,7 @@ class Connexion:
             shutil.rmtree(tmp_directory)
         os.makedirs(tmp_directory, exist_ok=True)
         print("Dossier temporaire vidé")
+
+    def __define_max_process(self, max_process: int):
+        # fonction permettant de définir le nombre maximum de processus à exécuter en parallèle
+        self.max_process = max_process
