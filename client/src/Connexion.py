@@ -42,15 +42,16 @@ class Connexion:
             try:
                 message = self.client_socket.recv(1024).decode('utf-8')
                 if message:
-                    self.traitement_message(message)
-                    print(f"Received: {message}")
+                    msg = json.loads(message)
+                    self.traitement_message(msg)
                 else:
                     break
             except:
                 break
 
     def traitement_message(self, message):
-        print(f"Message reçu : {message}")
+        #print(f"Message reçu : {message}")
+        # réception des messages pour la récupération de la sortie de l'exécution du programme
         if message["author_type"] == "master" and message["destination_type"] == "client" and message["type"] == "output_file":
             output = message["output"]
             uid = message["uid"]

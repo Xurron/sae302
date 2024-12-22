@@ -185,27 +185,6 @@ class Connexion:
             except Exception as e:
                 print(f"Error sending message to slave {uid_slave}: {message}, error: {e}")
 
-    #def send_file(self, uid_slave, uid_file, file_path):
-    #    # fonction permettant d'envoyer des fichiers (qui iront vers les slaves)
-    #    if self.running:
-    #        try:
-    #            file_name = file_path.split('/')[-1]
-    #            with open(file_path, 'rb') as file:
-    #                file_content = file.read()
-    #                message = {
-    #                    "author_type": "master",
-    #                    "destination_type": "slave",
-    #                    "uid_destination": uid_slave,
-    #                    "uid_file": uid_file,
-    #                    "type": "file",
-    #                    "file_name": file_name,
-    #                    "file_content": file_content.decode('utf-8')
-    #                }
-    #                self.send_data(message)
-    #                print(f"Fichier envoyé à {uid_slave} : {file_path}")
-    #        except Exception as e:
-    #            print(f"Erreur lors de l'envoi du fichier : {file_path}, erreur: {e}")
-
     def __clear_tmp_directory(self):
         # fonction permettant de vider le dossier temporaire
         tmp_directory = "tmp/"
