@@ -107,6 +107,7 @@ class Connexion:
                 "author_type": "master",
                 "destination_type": "client",
                 "type": "output_file",
+                "uid_slave": uid_slave,
                 "uid": uid,
                 "output": output
             }

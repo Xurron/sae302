@@ -12,6 +12,7 @@ class Connexion:
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.running = False
         self.receive_thread = None
+        self.sent_file_array = []
 
     def connect(self):
         try:
@@ -55,7 +56,18 @@ class Connexion:
         if message["author_type"] == "master" and message["destination_type"] == "client" and message["type"] == "output_file":
             output = message["output"]
             uid = message["uid"]
+            uid_slave = message["uid_slave"]
             print(f"Pour le fichier ayant comme ID : {uid}, le contenu est : {output}")
+            # enregistrer le fichier dans un dossier temporaire
+            with open(f"tmp/{uid}.txt", "w") as file:
+                file.write(output)
+            # renseigner le résultat dans le tableau des fichiers envoyés (modifier le status et ajouter l'uid du slave & le résultat)
+            for file in self.sent_file_array:
+                if file["uid"] == uid:
+                    file["state"] = "ok"
+                    file["output"] = output
+                    file["uid_slave"] = uid_slave
+                    break
 
     def send_data(self, message):
         if self.running:
@@ -84,5 +96,14 @@ class Connexion:
                     }
                     self.client_socket.send(json.dumps(message).encode('utf-8'))
                     print(f"Fichier envoyé : {file_path} avec comme UID : {uid}")
+                    log = {
+                        "uid": uid,
+                        "state": "sent",
+                        "file_path": file_path
+                    }
+                    self.sent_file_array.append(log)
             except Exception as e:
                 print(f"Error sending file: {file_path}, error: {e}")
+
+    def get_sent_files(self):
+        return self.sent_file_array
