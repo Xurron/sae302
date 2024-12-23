@@ -64,7 +64,10 @@ class Connexion:
             # renseigner le résultat dans le tableau des fichiers envoyés (modifier le status et ajouter l'uid du slave & le résultat)
             for file in self.sent_file_array:
                 if file["uid"] == uid:
-                    file["state"] = "ok"
+                    if message["error"]:
+                        file["state"] = "ko"
+                    else:
+                        file["state"] = "ok"
                     file["output"] = output
                     file["uid_slave"] = uid_slave
                     break

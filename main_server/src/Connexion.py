@@ -103,12 +103,14 @@ class Connexion:
             uid = message["uid"]
             uid_slave = message["uid_slave"]
             output = message["output"]
+            error = message["error"]
             message = {
                 "author_type": "master",
                 "destination_type": "client",
                 "type": "output_file",
                 "uid_slave": uid_slave,
                 "uid": uid,
+                "error": error,
                 "output": output
             }
 

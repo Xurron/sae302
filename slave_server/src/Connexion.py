@@ -87,7 +87,7 @@ class Connexion:
                 try:
                     self.client_socket.send(json.dumps(message).encode('utf-8'))
                     print(f"Sent: {message}")
-                except:
+                except Exception as e:
                     print(f"Une erreur est survenue lors de l'envoi du message : {message}, erreur : {e}")
 
     def execute_file(self, file_path: str, ext:str):
@@ -113,18 +113,34 @@ class Connexion:
                     print(f"Error: {ext} extension not supported")
 
                 if result:
-                    output = str(result.stdout)
+                    print(result)
                     uid_exec = file_path.split('/')[-2]
-                    message = {
-                        "author_type": "slave",
-                        "destination_type": "master",
-                        "type": "output_file",
-                        "uid": uid_exec,
-                        "uid_slave": self.uid,
-                        "output": output
-                    }
-                    self.send_data(message)
-                    print(f"Le fichier {uid_exec} a bien été exécuté et a retourné : {output}")
+                    if result.returncode == 0:
+                        output = str(result.stdout)
+                        message = {
+                            "author_type": "slave",
+                            "destination_type": "master",
+                            "type": "output_file",
+                            "uid": uid_exec,
+                            "uid_slave": self.uid,
+                            "error": False,
+                            "output": output
+                        }
+                        self.send_data(message)
+                        print(f"Le fichier {uid_exec} a bien été exécuté et a retourné : {output}")
+                    else:
+                        output = str(result.stderr)
+                        message = {
+                            "author_type": "slave",
+                            "destination_type": "master",
+                            "type": "output_file",
+                            "uid": uid_exec,
+                            "uid_slave": self.uid,
+                            "error": True,
+                            "output": output
+                        }
+                        self.send_data(message)
+                        print(f"Une erreur est survenue lors de l'exécution du fichier : {file_path}")
 
                 sys.exit(0)
             except Exception as e:
