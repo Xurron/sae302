@@ -86,7 +86,6 @@ class Connexion:
             if isinstance(message, dict):
                 try:
                     self.client_socket.send(json.dumps(message).encode('utf-8'))
-                    print(f"Sent: {message}")
                 except Exception as e:
                     print(f"Une erreur est survenue lors de l'envoi du message : {message}, erreur : {e}")
 
@@ -148,7 +147,34 @@ class Connexion:
                         print(f"Une erreur est survenue lors de l'exécution du fichier : {file_path}")
 
                 sys.exit(0)
+
+            # filtrer l'erreur si la variable result n'existe pas
+            except UnboundLocalError:
+                uid_exec = file_path.split('/')[-2]
+                message = {
+                    "author_type": "slave",
+                    "destination_type": "master",
+                    "type": "output_file",
+                    "uid": uid_exec,
+                    "uid_slave": self.uid,
+                    "error": True,
+                    "output": "Une erreur est survenue lors de l'exécution du fichier, merci de vous référer à la console du serveur esclave."
+                }
+                self.send_data(message)
+                print(f"Une erreur est survenue lors de l'exécution du fichier : {file_path}")
+
             except Exception as e:
+                uid_exec = file_path.split('/')[-2]
+                message = {
+                    "author_type": "slave",
+                    "destination_type": "master",
+                    "type": "output_file",
+                    "uid": uid_exec,
+                    "uid_slave": self.uid,
+                    "error": True,
+                    "output": "Une erreur est survenue lors de l'exécution du fichier, merci de vous référer à la console du serveur esclave."
+                }
+                self.send_data(message)
                 print(f"Une erreur est survenue lors de l'exécution du fichier : {file_path}, erreur : {e}")
 
     def remove_compile_if_exist(self, file):
@@ -161,7 +187,7 @@ class Connexion:
             subprocess.run(["java", "-version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return True
         except FileNotFoundError:
-            print("Erreur : Java n'est pas installé. Pour l'installer sous Linux : apt install default-jdk")
+            print("Erreur lors de l'exécution d'un fichier écrit en Java : Java n'est pas installé.")
             return False
 
     def verif_c(self):
@@ -169,7 +195,7 @@ class Connexion:
             subprocess.run(["gcc", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return True
         except FileNotFoundError:
-            print("Erreur : gcc n'est pas installé. Pour l'installer sous Linux : apt install gcc")
+            print("Erreur lors de l'exécution d'un fichier écrit en C : gcc n'est pas installé.")
             return False
 
     def verif_cpp(self):
@@ -177,7 +203,7 @@ class Connexion:
             subprocess.run(["g++", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return True
         except FileNotFoundError:
-            print("Erreur : g++ n'est pas installé. Pour l'installer sous Linux : apt install g++")
+            print("Erreur lors de l'exécution d'un fichier écrit en C++ : g++ n'est pas installé.")
             return False
 
     def __clear_tmp_directory(self):
