@@ -95,7 +95,12 @@ class Connexion:
             try:
                 # exécuter le programme en fonction de l'extension
                 if ext == "py":
-                    result = subprocess.run(["python3", file_path], capture_output=True, text=True)
+                    try:
+                        result = subprocess.run(["py", file_path], capture_output=True, text=True)
+                        print("1")
+                    except:
+                        result = subprocess.run(["python3", file_path], capture_output=True, text=True)
+                        print("2")
                 elif ext == "java":
                     if self.verif_java():
                         result = subprocess.run(["java", file_path], capture_output=True, text=True)
