@@ -13,22 +13,12 @@ class Interface(QMainWindow):
         self.widget.setLayout(self.grid)
 
         self.setWindowTitle("Exécution de programme")
-
-        # définition du nombre de processus maximum pouvant être exécuté par les slaves
-        self.max_process = QLabel("Nombre de processus maximum :")
-        self.grid.addWidget(self.max_process, 0, 0)
-
-        self.max_process_input = QLineEdit()
-        self.grid.addWidget(self.max_process_input, 0, 1)
-
-        self.max_process_button = QPushButton("Définir le nombre de processus")
-        self.max_process_button.clicked.connect(self.__set_max_process)
-        self.grid.addWidget(self.max_process_button, 0, 2)
+        self.resize(800, 400)
 
         # créer un bouton pour sélectionner et envoyer un fichier
         self.file_button = QPushButton("Sélectionner un fichier à envoyer")
         self.file_button.clicked.connect(self.__select_file)
-        self.grid.addWidget(self.file_button, 1, 0)
+        self.grid.addWidget(self.file_button, 0, 0)
 
         # faire un layout pour afficher les fichiers envoyés et quand on sélectionne un fichier, on peut voir le slave qui l'a exécuté et le résultat retourné
         # il doit y avoir une liste de fichiers envoyés avec l'UID du process et le chemin du fichier
@@ -44,10 +34,6 @@ class Interface(QMainWindow):
         self.refresh_timer = QTimer()
         self.refresh_timer.timeout.connect(self.__refresh_file_list)
         self.refresh_timer.start(5000)  # rafraîchir toutes les 5 secondes
-
-    def __set_max_process(self):
-        max_process = self.max_process_input.text()
-        # self.client.set_max_process(max_process)
 
     def __select_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner un fichier")
