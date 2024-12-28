@@ -33,12 +33,13 @@ class Interface(QMainWindow):
         # démarrer le rafraîchissement automatique
         self.refresh_timer = QTimer()
         self.refresh_timer.timeout.connect(self.__refresh_file_list)
-        self.refresh_timer.start(5000)  # rafraîchir toutes les 5 secondes
+        self.refresh_timer.start(1000)  # rafraîchir la liste toutes les secondes
 
     def __select_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner un fichier")
         if file_path:
             self.client.send_file(file_path)
+            self.__refresh_file_list()
 
     def __refresh_file_list(self):
         # rafraîchir la liste des fichiers envoyés
@@ -62,17 +63,17 @@ class Interface(QMainWindow):
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel(f"UID: {file_info['uid']}"))
-        layout.addWidget(QLabel(f"Chemin du fichier: {file_info['file_path']}"))
+        layout.addWidget(QLabel(f"Chemin du fichier : {file_info['file_path']}"))
 
         try:
-            layout.addWidget(QLabel(f"UID du slave: {file_info['uid_slave']}"))
+            layout.addWidget(QLabel(f"UID du slave : {file_info['uid_slave']}"))
         except KeyError:
-            layout.addWidget(QLabel("UID du slave: Non disponible"))
+            layout.addWidget(QLabel("UID du slave : Non disponible"))
 
         try:
-            layout.addWidget(QLabel(f"Résultat: {file_info['output']}"))
+            layout.addWidget(QLabel(f"Résultat : {file_info['output']}"))
         except KeyError:
-            layout.addWidget(QLabel("Résultat: Non disponible"))
+            layout.addWidget(QLabel("Résultat : Non disponible"))
 
         details_dialog.setLayout(layout)
         details_dialog.exec()

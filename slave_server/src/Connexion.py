@@ -21,23 +21,25 @@ class Connexion:
         try:
             self.client_socket.connect((self.host, self.port))
             print(f"Connecté au serveur {self.host}:{self.port} en tant que \"{self.type}\" et ayant comme UID : {self.uid}")
-            # récupérer les valeurs à mettre dans les langages de possibles
+            java_state = self.verif_java(False)
+            c_state = self.verif_c(False)
+            cpp_state = self.verif_cpp(False)
             data_connexion = {
                 "author_type": "slave",
                 "destination_type": "master",
                 "type": "connexion",
                 "uid": self.uid,
                 "python": True,
-                "java": True,
-                "c": True,
-                "c++": True
+                "java": java_state,
+                "c": c_state,
+                "c++": cpp_state
             }
             self.client_socket.send(json.dumps(data_connexion).encode('utf-8'))
             self.running = True
             self.__clear_tmp_directory() # supprimer les fichiers temporaires
             self.receive_thread = threading.Thread(target=self.receive_messages).start()
         except Exception as e:
-            print(f"Connection error: {e}")
+            print(f"Une erreur est survenue lors de la connexion au serveur maître : {e}")
 
     def disconnect(self):
         if self.running:
@@ -75,10 +77,8 @@ class Connexion:
             ext = file_name.split(".")[-1]
             # faire un execute_file dans un thread
             threading.Thread(target=self.execute_file, args=(file_path, ext)).start()
-            #self.execute_file(file_path, ext)
         else:
-            if message["author_type"] == "slave":
-                print(f"Message reçu du serveur maître : {message}")
+            pass
 
     def send_data(self, message):
         if self.running:
@@ -96,25 +96,23 @@ class Connexion:
                 if ext == "py":
                     try:
                         result = subprocess.run(["py", file_path], capture_output=True, text=True)
-                        print("1")
                     except:
                         result = subprocess.run(["python3", file_path], capture_output=True, text=True)
-                        print("2")
                 elif ext == "java":
-                    if self.verif_java():
+                    if self.verif_java(True):
                         result = subprocess.run(["java", file_path], capture_output=True, text=True)
                 elif ext == "c":
-                    if self.verif_c():
+                    if self.verif_c(True):
                         self.remove_compile_if_exist(f"./{file_path.split('.')[0]}")
                         os.system(f"gcc {file_path} -o {file_path.split('.')[0]}")
                         result = subprocess.run([f"./{file_path.split('.')[0]}"], capture_output=True, text=True)
                 elif ext == "cpp":
-                    if self.verif_cpp():
+                    if self.verif_cpp(True):
                         self.remove_compile_if_exist(f"./{file_path.split('.')[0]}")
                         os.system(f"g++ {file_path} -o {file_path.split('.')[0]}")
                         result = subprocess.run([f"./{file_path.split('.')[0]}"], capture_output=True, text=True)
                 else:
-                    print(f"Error: {ext} extension not supported")
+                    print(f"Erreur : {ext} n'est pas une extension supportée.")
 
                 if result:
                     print(result)
@@ -182,28 +180,31 @@ class Connexion:
             os.remove(file)
 
     # créer une fonction permettant de vérifier si java est installé ou non
-    def verif_java(self):
+    def verif_java(self, print_error: bool):
         try:
             subprocess.run(["java", "-version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return True
         except FileNotFoundError:
-            print("Erreur lors de l'exécution d'un fichier écrit en Java : Java n'est pas installé.")
+            if print_error:
+                print("Erreur lors de l'exécution d'un fichier écrit en Java : Java n'est pas installé.")
             return False
 
-    def verif_c(self):
+    def verif_c(self, print_error: bool):
         try:
             subprocess.run(["gcc", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return True
         except FileNotFoundError:
-            print("Erreur lors de l'exécution d'un fichier écrit en C : gcc n'est pas installé.")
+            if print_error:
+                print("Erreur lors de l'exécution d'un fichier écrit en C : gcc n'est pas installé.")
             return False
 
-    def verif_cpp(self):
+    def verif_cpp(self, print_error: bool):
         try:
             subprocess.run(["g++", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return True
         except FileNotFoundError:
-            print("Erreur lors de l'exécution d'un fichier écrit en C++ : g++ n'est pas installé.")
+            if print_error:
+                print("Erreur lors de l'exécution d'un fichier écrit en C++ : g++ n'est pas installé.")
             return False
 
     def __clear_tmp_directory(self):

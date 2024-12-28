@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import socket
 import threading
 import uuid
@@ -13,6 +15,7 @@ class Connexion:
         self.running = False
         self.receive_thread = None
         self.sent_file_array = []
+        self.__clear_tmp_directory()
 
     def connect(self):
         try:
@@ -28,7 +31,7 @@ class Connexion:
             self.running = True
             self.receive_thread = threading.Thread(target=self.receive_messages).start()
         except Exception as e:
-            print(f"Connection error: {e}")
+            print(f"Une erreur est survenue lors de la connexion au serveur maître : {e}")
 
     def disconnect(self):
         if self.running:
@@ -51,12 +54,14 @@ class Connexion:
                 break
 
     def traitement_message(self, message):
-        #print(f"Message reçu : {message}")
         # réception des messages pour la récupération de la sortie de l'exécution du programme
         if message["author_type"] == "master" and message["destination_type"] == "client" and message["type"] == "output_file":
             output = message["output"]
             uid = message["uid"]
-            uid_slave = message["uid_slave"]
+            try:
+                uid_slave = message["uid_slave"]
+            except:
+                uid_slave = None
             print(f"Pour le fichier ayant comme ID : {uid}, le contenu est : {output}")
             # enregistrer le fichier dans un dossier temporaire
             with open(f"tmp/{uid}.txt", "w") as file:
@@ -78,9 +83,8 @@ class Connexion:
             if isinstance(message, dict):
                 try:
                     self.client_socket.send(json.dumps(message).encode('utf-8'))
-                    #print(f"Sent: {message}")
                 except Exception as e:
-                    print(f"Error sending message: {message}, error: {e}")
+                    print(f"Une erreur est survenue lors de l'envoi du message : {message}, erreur : {e}")
 
     def send_file(self, file_path):
         if self.running:
@@ -106,7 +110,15 @@ class Connexion:
                     }
                     self.sent_file_array.append(log)
             except Exception as e:
-                print(f"Error sending file: {file_path}, error: {e}")
+                print(f"Une erreur est survenue lors de l'envoi du fichier ayant comme chemin : {file_path}, erreur : {e}")
 
     def get_sent_files(self):
         return self.sent_file_array
+
+    def __clear_tmp_directory(self):
+        # fonction permettant de vider le dossier temporaire
+        tmp_directory = "tmp/"
+        if os.path.exists(tmp_directory):
+            shutil.rmtree(tmp_directory)
+        os.makedirs(tmp_directory, exist_ok=True)
+        print("Dossier temporaire vidé")

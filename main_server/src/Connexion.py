@@ -63,7 +63,7 @@ class Connexion:
 
                 self.clients.append(content)
                 threading.Thread(target=self.handle_client, args=(client_socket,)).start()
-                print(f"Connexion établie avec le slave {client_address}")
+                print(f"Connexion établie avec le serveur esclave {client_address}")
 
     def get_client_type(self, client_socket):
         client_type = client_socket.recv(1024).decode('utf-8')
@@ -99,7 +99,6 @@ class Connexion:
             #self.dispatch(file_path, uid)
             self.send_file_to_slave(file_path)
         elif message["author_type"] == "slave" and message["destination_type"] == "master" and message["type"] == "output_file":
-            #print(f"Message reçu d'un esclave : {message}")
             uid = message["uid"]
             uid_slave = message["uid_slave"]
             output = message["output"]
@@ -120,14 +119,10 @@ class Connexion:
 
             self.send_data(message)
         else:
-            if message["author_type"] == "client":
-                print(f"Message reçu d'un client, {message}")
-            if message["author_type"] == "slave":
-                print(f"Message reçu d'un esclave, {message}")
+            pass
 
     def broadcast(self, message):
         for client in self.clients:
-            #print(client["socket"])
             c = client["socket"]
             try:
                 c.send(message.encode('utf-8'))
@@ -146,9 +141,8 @@ class Connexion:
             if isinstance(message, dict):
                 try:
                     self.broadcast(json.dumps(message))
-                    print(f"Sent: {message}")
                 except Exception as e:
-                    print(f"Error sending message: {message}, error: {e}")
+                    print(f"Une erreur est survenue lors de l'envoi du message : {message}, erreur: {e}")
 
     def send_file_to_slave(self, file_path: str):
         # fonction permettant d'envoyer des données à un esclave
@@ -171,13 +165,30 @@ class Connexion:
 
                 for slave in self.clients:
                     if slave["author_type"] == "slave":
-                        if min_slave is None or ((slave["process_running"] < min_slave["process_running"]) and (slave[ext])):
-                            min_slave = slave
-
-                uid_slave = min_slave["uid"]
+                        if min_slave is None:
+                            if slave[ext] and slave["process_running"] < self.max_process:
+                                min_slave = slave
+                        else:
+                            if slave[ext] and slave["process_running"] < self.max_process and slave["process_running"] < min_slave["process_running"]:
+                                min_slave = slave
 
                 file_name = file_path.split('/')[-1]
                 uid_file = file_path.split('/')[-2]
+
+                # s'il n'y a aucun esclave qui peut exécuter le fichier, on envoie un message d'erreur au client
+                if min_slave is None:
+                    message = {
+                        "author_type": "master",
+                        "destination_type": "client",
+                        "type": "output_file",
+                        "uid": uid_file,
+                        "error": True,
+                        "output": "Aucun serveur esclave disponible pour exécuter le fichier"
+                    }
+                    self.send_data(message)
+                    return
+
+                uid_slave = min_slave["uid"]
 
                 with open(file_path, 'rb') as file:
                     file_content = file.read()
@@ -193,9 +204,8 @@ class Connexion:
 
                 self.send_data(message)
                 min_slave["process_running"] += 1
-                print(min_slave)
             except Exception as e:
-                print(f"Error sending message to slave {uid_slave}: {message}, error: {e}")
+                print(f"Une erreur est survenue lors de l'envoi d'un fichier au serveur esclave ayant comme UID {uid_slave} : erreur : {e}")
 
     def __clear_tmp_directory(self):
         # fonction permettant de vider le dossier temporaire
@@ -204,7 +214,3 @@ class Connexion:
             shutil.rmtree(tmp_directory)
         os.makedirs(tmp_directory, exist_ok=True)
         print("Dossier temporaire vidé")
-
-    def __define_max_process(self, max_process: int):
-        # fonction permettant de définir le nombre maximum de processus à exécuter en parallèle
-        self.max_process = max_process
