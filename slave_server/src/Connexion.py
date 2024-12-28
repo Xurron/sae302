@@ -8,10 +8,10 @@ import os
 import subprocess
 
 class Connexion:
-    def __init__(self, host: str, port: int, type: str):
+    def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
-        self.type = type
+        self.type = "slave"
         self.uid = str(uuid.uuid4())
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.running = True

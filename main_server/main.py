@@ -1,23 +1,20 @@
 import threading
-from time import sleep
-import os
+import argparse
 
 from src.Connexion import Connexion
 
-def main():
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Lancer le programme avec des arguments.')
+    parser.add_argument('--ip', type=str, required=True, help='Adresse IP du serveur')
+    parser.add_argument('--port', type=int, required=True, help='Port du serveur')
+    parser.add_argument('--max-process', type=int, required=True, help='Nombre maximum de processus')
+
+    args = parser.parse_args()
+    print(args)
+
     print(f"Initialisation du serveur pour les clients")
-    server = Connexion("127.0.0.1", 10002)
+    server = Connexion(args.ip, args.port, args.max_process)
     server_thread = threading.Thread(target=server.start)
 
     print(f"Démarrage du serveur maître")
     server_thread.start()
-
-    #while True:
-    #    # si il y a un fichier main.py dans le dossier tmp, on l'envoi vers un serveur esclave
-    #    if os.path.exists("tmp/main.py"):
-    #        server.send_file("tmp/main.py")
-    #        print(f"Envoi du fichier main.py à un esclave")
-    #    sleep(10)
-
-if __name__ == '__main__':
-    main()

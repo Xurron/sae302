@@ -5,13 +5,13 @@ import threading
 import os
 
 class Connexion:
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int, max_process: int):
         self.host = host
         self.port = port
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clients = []
         self.running = True
-        self.max_process = 3
+        self.max_process = max_process
 
     def start(self):
         self.server_socket.bind((self.host, self.port))
