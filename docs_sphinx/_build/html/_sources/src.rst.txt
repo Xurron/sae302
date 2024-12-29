@@ -1,0 +1,29 @@
+src package
+===========
+
+Submodules
+----------
+
+src.Connexion module
+--------------------
+
+.. automodule:: src.Connexion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+src.Interface module
+--------------------
+
+.. automodule:: src.Interface
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: src
+   :members:
+   :undoc-members:
+   :show-inheritance:

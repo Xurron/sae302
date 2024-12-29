@@ -1,0 +1,29 @@
+client.src package
+==================
+
+Submodules
+----------
+
+client.src.Connexion module
+---------------------------
+
+.. automodule:: client.src.Connexion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+client.src.Interface module
+---------------------------
+
+.. automodule:: client.src.Interface
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: client.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
