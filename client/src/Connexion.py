@@ -4,32 +4,35 @@ import shutil
 import socket
 import threading
 import uuid
+from time import sleep
+
 
 class Connexion:
     def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
-        self.type = "client"
-        self.uid = str(uuid.uuid4())
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__type = "client"
+        self.__uid = str(uuid.uuid4())
+        self.__client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.running = False
-        self.receive_thread = None
-        self.sent_file_array = []
+        self.__receive_thread = None
+        self.__sent_file_array = []
+        self.__server_connected = []
         self.__clear_tmp_directory()
 
     def connect(self):
         try:
-            self.client_socket.connect((self.host, self.port))
-            print(f"Connecté au serveur {self.host}:{self.port} en tant que \"{self.type}\"")
+            self.__client_socket.connect((self.host, self.port))
+            print(f"Connecté au serveur {self.host}:{self.port} en tant que \"{self.__type}\"")
             data_connexion = {
                 "author_type": "client",
                 "destination_type": "master",
                 "type": "connexion",
-                "uid": self.uid
+                "uid": self.__uid
             }
-            self.client_socket.send(json.dumps(data_connexion).encode('utf-8'))
+            self.__client_socket.send(json.dumps(data_connexion).encode('utf-8'))
             self.running = True
-            self.receive_thread = threading.Thread(target=self.receive_messages).start()
+            self.__receive_thread = threading.Thread(target=self.__receive_messages).start()
         except Exception as e:
             print(f"Une erreur est survenue lors de la connexion au serveur maître : {e}")
 
@@ -37,23 +40,23 @@ class Connexion:
         if self.running:
             print(f"Déconnexion du serveur {self.host}:{self.port}")
             self.running = False
-            self.client_socket.close()
-            if self.receive_thread is not None:
-                self.receive_thread.join()
+            self.__client_socket.close()
+            if self.__receive_thread is not None:
+                self.__receive_thread.join()
 
-    def receive_messages(self):
+    def __receive_messages(self):
         while self.running:
             try:
-                message = self.client_socket.recv(1024).decode('utf-8')
+                message = self.__client_socket.recv(1024).decode('utf-8')
                 if message:
                     msg = json.loads(message)
-                    self.traitement_message(msg)
+                    self.__traitement_message(msg)
                 else:
                     break
             except:
                 break
 
-    def traitement_message(self, message):
+    def __traitement_message(self, message):
         # réception des messages pour la récupération de la sortie de l'exécution du programme
         if message["author_type"] == "master" and message["destination_type"] == "client" and message["type"] == "output_file":
             output = message["output"]
@@ -67,7 +70,7 @@ class Connexion:
             with open(f"tmp/{uid}.txt", "w") as file:
                 file.write(output)
             # renseigner le résultat dans le tableau des fichiers envoyés (modifier le status et ajouter l'uid du slave & le résultat)
-            for file in self.sent_file_array:
+            for file in self.__sent_file_array:
                 if file["uid"] == uid:
                     if message["error"]:
                         file["state"] = "ko"
@@ -76,17 +79,19 @@ class Connexion:
                     file["output"] = output
                     file["uid_slave"] = uid_slave
                     break
+        elif message["author_type"] == "master" and message["destination_type"] == "client" and message["type"] == "request_server_connected":
+            self.__traitement_message_server_connected(message)
 
-    def send_data(self, message):
+    def __send_data(self, message):
         if self.running:
             # vérifier que le message est bien un dictionnaire
             if isinstance(message, dict):
                 try:
-                    self.client_socket.send(json.dumps(message).encode('utf-8'))
+                    self.__client_socket.send(json.dumps(message).encode('utf-8'))
                 except Exception as e:
                     print(f"Une erreur est survenue lors de l'envoi du message : {message}, erreur : {e}")
 
-    def send_file(self, file_path):
+    def __send_file(self, file_path):
         if self.running:
             try:
                 uid = str(uuid.uuid4())
@@ -101,19 +106,19 @@ class Connexion:
                         "file_name": file_name,
                         "file_content": file_content.decode('utf-8')
                     }
-                    self.client_socket.send(json.dumps(message).encode('utf-8'))
+                    self.__client_socket.send(json.dumps(message).encode('utf-8'))
                     print(f"Fichier envoyé : {file_path} avec comme UID : {uid}")
                     log = {
                         "uid": uid,
                         "state": "sent",
                         "file_path": file_path
                     }
-                    self.sent_file_array.append(log)
+                    self.__sent_file_array.append(log)
             except Exception as e:
                 print(f"Une erreur est survenue lors de l'envoi du fichier ayant comme chemin : {file_path}, erreur : {e}")
 
-    def get_sent_files(self):
-        return self.sent_file_array
+    def __get_sent_files(self):
+        return self.__sent_file_array
 
     def __clear_tmp_directory(self):
         # fonction permettant de vider le dossier temporaire
@@ -122,3 +127,20 @@ class Connexion:
             shutil.rmtree(tmp_directory)
         os.makedirs(tmp_directory, exist_ok=True)
         print("Dossier temporaire vidé")
+
+    def __send_request_server_connected(self):
+        message = {
+            "author_type": "client",
+            "destination_type": "master",
+            "type": "request_server_connected"
+        }
+        self.__send_data(message)
+
+    def __traitement_message_server_connected(self, message):
+        list = message["list"]
+        self.__server_connected = list
+
+    def __get_server_connected(self):
+        self.__send_request_server_connected()
+        sleep(1)
+        return self.__server_connected

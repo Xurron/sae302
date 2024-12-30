@@ -18,37 +18,36 @@ class Interface(QMainWindow):
         # créer un bouton pour sélectionner et envoyer un fichier
         self.file_button = QPushButton("Sélectionner un fichier à envoyer")
         self.file_button.clicked.connect(self.__select_file)
-        self.grid.addWidget(self.file_button, 0, 0)
-
-        # faire un layout pour afficher les fichiers envoyés et quand on sélectionne un fichier, on peut voir le slave qui l'a exécuté et le résultat retourné
-        # il doit y avoir une liste de fichiers envoyés avec l'UID du process et le chemin du fichier
-        # pour chaque fichier, on doit pouvoir double cliquer dessus pour avoir une nouvelle fenêtre pour avoir le résultat retourné par le slave et autres informations
-        # le rafraichissement doit être automatique
+        self.grid.addWidget(self.file_button, 0, 0, 1, 3)
 
         # liste des fichiers envoyés
         self.file_list = QListWidget()
         self.file_list.itemDoubleClicked.connect(self.__show_file_details)
-        self.grid.addWidget(self.file_list, 2, 0, 1, 3)
+        self.grid.addWidget(self.file_list, 1, 0, 1, 3)
 
         # démarrer le rafraîchissement automatique
         self.refresh_timer = QTimer()
         self.refresh_timer.timeout.connect(self.__refresh_file_list)
-        self.refresh_timer.start(1000)  # rafraîchir la liste toutes les secondes
+        self.refresh_timer.start(1000 * 1)  # rafraîchir la liste toutes les secondes
+
+        self.server_button = QPushButton("Liste des clients et serveurs connectés")
+        self.server_button.clicked.connect(self.__show_server_list)
+        self.grid.addWidget(self.server_button, 2, 0, 1, 3)
 
     def __select_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner un fichier")
         if file_path:
-            self.client.send_file(file_path)
+            self.client._Connexion__send_file(file_path)
             self.__refresh_file_list()
 
     def __refresh_file_list(self):
         # rafraîchir la liste des fichiers envoyés
         self.file_list.clear()
-        for file_info in self.client.get_sent_files():
+        for file_info in self.client._Connexion__get_sent_files():
             if file_info["state"] == "ok":
                 state = "✅"
             elif file_info["state"] == "sent":
-                state = "⏳" # à changer
+                state = "⏳"
             else:
                 state = "❌"
 
@@ -77,3 +76,37 @@ class Interface(QMainWindow):
 
         details_dialog.setLayout(layout)
         details_dialog.exec()
+
+    def __show_server_list(self):
+        server_list = self.client._Connexion__get_server_connected()
+        server_dialog = QDialog(self)
+        server_dialog.setWindowTitle("Liste des clients & serveurs connectés")
+
+        layout = QVBoxLayout()
+        for server in server_list:
+            if server["type"] == "client":
+                layout.addWidget(QLabel(f"Client connecté : {server['uid']}"))
+            elif server["type"] == "slave":
+                layout.addWidget(QLabel(f"Serveur maître connecté : {server['uid']}"))
+                if server["python"]:
+                    layout.addWidget(QLabel("Python : ✅"))
+                else:
+                    layout.addWidget(QLabel("Python : ❌"))
+                if server["java"]:
+                    layout.addWidget(QLabel("Java : ✅"))
+                else:
+                    layout.addWidget(QLabel("Java : ❌"))
+                if server["c"]:
+                    layout.addWidget(QLabel("C : ✅"))
+                else:
+                    layout.addWidget(QLabel("C : ❌"))
+                if server["c++"]:
+                    layout.addWidget(QLabel("C++ : ✅"))
+                else:
+                    layout.addWidget(QLabel("C++ : ❌"))
+
+            # ajouter une ligne vide pour séparer les clients et les serveurs
+            layout.addWidget(QLabel(""))
+
+        server_dialog.setLayout(layout)
+        server_dialog.exec()
