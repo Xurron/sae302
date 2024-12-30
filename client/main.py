@@ -28,7 +28,7 @@ if __name__ == '__main__':
         app.exec()
     else:
         print(f"Une erreur est survenue lors de la connexion au serveur")
-        sys.exit(0)
+        procedure_deconnexion(None, None)
 
     # Enregistrez le signal d'interruption clavier (CTRL+C)
     signal.signal(signal.SIGINT, procedure_deconnexion)

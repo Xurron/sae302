@@ -131,10 +131,11 @@ class Connexion:
                 pass
 
     def __remove_client(self, client_socket):
-        if client_socket in self.__clients:
-            print(f"Déconnexion : {client_socket}")
-            self.__clients.remove(client_socket)
-            client_socket.close()
+        for clients in self.__clients:
+            if clients["socket"] == client_socket:
+                print(f"Déconnexion : {client_socket}")
+                self.__clients.remove(clients)
+                client_socket.close()
 
     def __send_data(self, message):
         if self.__running:
