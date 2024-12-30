@@ -8,7 +8,18 @@ from time import sleep
 
 
 class Connexion:
+    """
+        Classe permettant de gérer la connexion entre le client et le serveur
+
+        :param host: str : Adresse IP du serveur
+        :type host: str
+        :param port: int : Port du serveur
+        :type port: int
+    """
     def __init__(self, host: str, port: int):
+        """
+            Constructeur de la classe Connexion
+        """
         self.host = host
         self.port = port
         self.__type = "client"
@@ -21,6 +32,9 @@ class Connexion:
         self.__clear_tmp_directory()
 
     def connect(self):
+        """
+            Méthode permettant de se connecter au serveur maître
+        """
         try:
             self.__client_socket.connect((self.host, self.port))
             print(f"Connecté au serveur {self.host}:{self.port} en tant que \"{self.__type}\"")
@@ -37,6 +51,9 @@ class Connexion:
             print(f"Une erreur est survenue lors de la connexion au serveur maître : {e}")
 
     def disconnect(self):
+        """
+            Méthode permettant de se déconnecter du serveur
+        """
         if self.running:
             print(f"Déconnexion du serveur {self.host}:{self.port}")
             self.running = False

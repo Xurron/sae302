@@ -2,6 +2,11 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 
 class Interface(QMainWindow):
+    """
+        Classe permettant de gérer l'interface graphique du client
+
+        :param client: Connexion : Objet de connexion au serveur
+    """
     def __init__(self, client):
         super().__init__()
         self.client = client
@@ -56,26 +61,26 @@ class Interface(QMainWindow):
             else:
                 state = "❌"
 
-            item = QListWidgetItem(f"{state}・{file_info['uid']} - {file_info['file_path']}")
+            item = QListWidgetItem(f"{state}・{file_info["uid"]} - {file_info["file_path"]}")
             item.setData(Qt.ItemDataRole.UserRole, file_info)
             self.file_list.addItem(item)
 
     def __show_file_details(self, item):
         file_info = item.data(Qt.ItemDataRole.UserRole)
         details_dialog = QDialog(self)
-        details_dialog.setWindowTitle(f"Détails du fichier {file_info['file_path']}")
+        details_dialog.setWindowTitle(f"Détails du fichier {file_info["file_path"]}")
 
         layout = QVBoxLayout()
-        layout.addWidget(QLabel(f"UID: {file_info['uid']}"))
-        layout.addWidget(QLabel(f"Chemin du fichier : {file_info['file_path']}"))
+        layout.addWidget(QLabel(f"UID: {file_info["uid"]}"))
+        layout.addWidget(QLabel(f"Chemin du fichier : {file_info["file_path"]}"))
 
         try:
-            layout.addWidget(QLabel(f"UID du slave : {file_info['uid_slave']}"))
+            layout.addWidget(QLabel(f"UID du slave : {file_info["uid_slave"]}"))
         except KeyError:
             layout.addWidget(QLabel("UID du slave : Non disponible"))
 
         try:
-            layout.addWidget(QLabel(f"Résultat : {file_info['output']}"))
+            layout.addWidget(QLabel(f"Résultat : {file_info["output"]}"))
         except KeyError:
             layout.addWidget(QLabel("Résultat : Non disponible"))
 
@@ -90,9 +95,9 @@ class Interface(QMainWindow):
         layout = QVBoxLayout()
         for server in server_list:
             if server["type"] == "client":
-                layout.addWidget(QLabel(f"Client connecté : {server['uid']}"))
+                layout.addWidget(QLabel(f"Client connecté : {server["uid"]}"))
             elif server["type"] == "slave":
-                layout.addWidget(QLabel(f"Serveur maître connecté : {server['uid']}"))
+                layout.addWidget(QLabel(f"Serveur maître connecté : {server["uid"]} et qui fait tourner {server["process_running"]} programme(s)."))
                 layout.addWidget(QLabel(f"Langages disponibles : Python {"✅" if server["python"] else "❌"}, Java {"✅" if server["java"] else "❌"}, C {"✅" if server["c"] else "❌"}, C++ {"✅" if server["c++"] else "❌"}."))
 
             # ajouter une ligne vide pour séparer les clients et les serveurs

@@ -8,7 +8,18 @@ import os
 import subprocess
 
 class Connexion:
+    """
+        Classe permettant de gérer la connexion entre le serveur esclave et le serveur maître
+
+        :param host: str : Adresse IP du serveur
+        :type host: str
+        :param port: int : Port du serveur
+        :type port: int
+    """
     def __init__(self, host: str, port: int):
+        """
+            Constructeur de la classe Connexion
+        """
         self.host = host
         self.port = port
         self.__type = "slave"
@@ -18,6 +29,9 @@ class Connexion:
         self.__receive_thread = None
 
     def connect(self):
+        """
+            Méthode permettant de se connecter au serveur maître
+        """
         try:
             self.__client_socket.connect((self.host, self.port))
             print(f"Connecté au serveur {self.host}:{self.port} en tant que \"{self.__type}\" et ayant comme UID : {self.__uid}")
@@ -42,6 +56,9 @@ class Connexion:
             print(f"Une erreur est survenue lors de la connexion au serveur maître : {e}")
 
     def disconnect(self):
+        """
+            Méthode permettant de se déconnecter du serveur
+        """
         if self.__running:
             print(f"Déconnexion du serveur {self.host}:{self.port}")
             self.__running = False

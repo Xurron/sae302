@@ -9,9 +9,10 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../client/src'))
-sys.path.insert(0, os.path.abspath('../main_server/src'))
-sys.path.insert(0, os.path.abspath('../slave_server/src'))
+sys.path.insert(0, os.path.abspath('../'))
+#sys.path.insert(0, os.path.abspath('../client/src'))
+#sys.path.insert(1, os.path.abspath('../main_server/src'))
+#sys.path.insert(2, os.path.abspath('../slave_server/src'))
 
 project = 'SAE302'
 copyright = '2024, Xurron'

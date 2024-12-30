@@ -1,7 +1,7 @@
 Classe Connexion
 ================
 
-.. automodule:: Connexion
+.. automodule:: client.src.Connexion
    :members:
    :undoc-members:
    :show-inheritance:

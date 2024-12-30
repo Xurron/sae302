@@ -5,7 +5,20 @@ import threading
 import os
 
 class Connexion:
+    """
+        Classe permettant de gérer la connexion entre le client et le serveur
+
+        :param host: str : Adresse IP du serveur
+        :type host: str
+        :param port: int : Port du serveur
+        :type port: int
+        :param max_process: int : Nombre maximum de processus
+        :type max_process: int
+    """
     def __init__(self, host: str, port: int, max_process: int):
+        """
+            Constructeur de la classe Connexion
+        """
         self.host = host
         self.port = port
         self.__server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -14,6 +27,9 @@ class Connexion:
         self.__max_process = max_process
 
     def start(self):
+        """
+            Méthode permettant de démarrer le serveur maître
+        """
         self.__server_socket.bind((self.host, self.port))
         self.__server_socket.listen(5)
         print(f"Le serveur a démarré sur {self.host}:{self.port}")
@@ -244,6 +260,7 @@ class Connexion:
                 clients.append({
                     "type": "slave",
                     "uid": client["uid"],
+                    "process_running": client["process_running"],
                     "python": client["python"],
                     "java": client["java"],
                     "c": client["c"],
