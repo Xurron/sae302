@@ -15,15 +15,20 @@ class Interface(QMainWindow):
         self.setWindowTitle("Exécution de programme")
         self.resize(800, 400)
 
+        # créer un texte pour l'explication de l'interface
+        self.explanation = QLabel("Pour pouvoir exécuter des programmes sur des serveurs esclaves il faut cliquer sur \"Sélectionnez un fichier à envoyer\".<br>Pour voir le résultat du programme exécuté, double cliquez sur le fichier envoyé.<br>Une indication est ajoutée pour savoir si le programme s'est exécuté correctement (✅ ; ⏳ ; ❌).<br>Pour voir la liste des clients et des serveurs esclaves connectés, cliquez sur \"Liste des clients et serveurs connectés\".")
+        self.explanation.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.explanation, 0, 0, 1, 3)
+
         # créer un bouton pour sélectionner et envoyer un fichier
         self.file_button = QPushButton("Sélectionner un fichier à envoyer")
         self.file_button.clicked.connect(self.__select_file)
-        self.grid.addWidget(self.file_button, 0, 0, 1, 3)
+        self.grid.addWidget(self.file_button, 1, 0, 1, 3)
 
         # liste des fichiers envoyés
         self.file_list = QListWidget()
         self.file_list.itemDoubleClicked.connect(self.__show_file_details)
-        self.grid.addWidget(self.file_list, 1, 0, 1, 3)
+        self.grid.addWidget(self.file_list, 2, 0, 1, 3)
 
         # démarrer le rafraîchissement automatique
         self.refresh_timer = QTimer()
@@ -32,7 +37,7 @@ class Interface(QMainWindow):
 
         self.server_button = QPushButton("Liste des clients et serveurs connectés")
         self.server_button.clicked.connect(self.__show_server_list)
-        self.grid.addWidget(self.server_button, 2, 0, 1, 3)
+        self.grid.addWidget(self.server_button, 3, 0, 1, 3)
 
     def __select_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner un fichier")
@@ -88,22 +93,7 @@ class Interface(QMainWindow):
                 layout.addWidget(QLabel(f"Client connecté : {server['uid']}"))
             elif server["type"] == "slave":
                 layout.addWidget(QLabel(f"Serveur maître connecté : {server['uid']}"))
-                if server["python"]:
-                    layout.addWidget(QLabel("Python : ✅"))
-                else:
-                    layout.addWidget(QLabel("Python : ❌"))
-                if server["java"]:
-                    layout.addWidget(QLabel("Java : ✅"))
-                else:
-                    layout.addWidget(QLabel("Java : ❌"))
-                if server["c"]:
-                    layout.addWidget(QLabel("C : ✅"))
-                else:
-                    layout.addWidget(QLabel("C : ❌"))
-                if server["c++"]:
-                    layout.addWidget(QLabel("C++ : ✅"))
-                else:
-                    layout.addWidget(QLabel("C++ : ❌"))
+                layout.addWidget(QLabel(f"Langages disponibles : Python {"✅" if server["python"] else "❌"}, Java {"✅" if server["java"] else "❌"}, C {"✅" if server["c"] else "❌"}, C++ {"✅" if server["c++"] else "❌"}."))
 
             # ajouter une ligne vide pour séparer les clients et les serveurs
             layout.addWidget(QLabel(""))
