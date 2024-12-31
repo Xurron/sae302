@@ -97,7 +97,7 @@ class Interface(QMainWindow):
             if server["type"] == "client":
                 layout.addWidget(QLabel(f"Client connecté : {server["uid"]}"))
             elif server["type"] == "slave":
-                layout.addWidget(QLabel(f"Serveur maître connecté : {server["uid"]} et qui fait tourner {server["process_running"]} programme(s)."))
+                layout.addWidget(QLabel(f"Serveur esclave connecté : {server["uid"]} et qui fait tourner {server["process_running"]} programme(s)."))
                 layout.addWidget(QLabel(f"Langages disponibles : Python {"✅" if server["python"] else "❌"}, Java {"✅" if server["java"] else "❌"}, C {"✅" if server["c"] else "❌"}, C++ {"✅" if server["c++"] else "❌"}."))
 
             # ajouter une ligne vide pour séparer les clients et les serveurs
